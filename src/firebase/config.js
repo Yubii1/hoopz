@@ -16,4 +16,4 @@ export const db = getFirestore(app)
 export const auth = getAuth(app)
 export const googleProvider = new GoogleAuthProvider()
 
-setPersistence(auth, browserLocalPersistence)
+setPersistence(auth, browserLocalPersistence).catch(console.error)
