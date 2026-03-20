@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { signInWithGoogle, loginWithEmail, registerWithEmail } from '../firebase/authHelpers'
 
 export default function Landing({ user, username, onPlay, onLeaderboard, onSignedIn }) {
-  const [mode, setMode] = useState('home') // home | login | register
+  const [mode, setMode] = useState('home') // home | auth
+  const [isNewUser, setIsNewUser] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -28,7 +29,7 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onSigne
     setLoading(true)
     setError('')
     try {
-      const firebaseUser = mode === 'register'
+      const firebaseUser = isNewUser
         ? await registerWithEmail(email, password)
         : await loginWithEmail(email, password)
       onSignedIn(firebaseUser)
@@ -36,6 +37,7 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onSigne
       const msg = e.code === 'auth/email-already-in-use' ? 'EMAIL ALREADY REGISTERED!'
         : e.code === 'auth/user-not-found' ? 'NO ACCOUNT FOUND!'
         : e.code === 'auth/wrong-password' ? 'WRONG PASSWORD!'
+        : e.code === 'auth/invalid-credential' ? 'WRONG EMAIL OR PASSWORD!'
         : e.code === 'auth/weak-password' ? 'PASSWORD TOO WEAK! MIN 6 CHARS.'
         : e.code === 'auth/invalid-email' ? 'INVALID EMAIL!'
         : 'SOMETHING WENT WRONG.'
@@ -51,7 +53,6 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onSigne
       alignItems: 'center', justifyContent: 'center',
       background: '#0a0a0f', overflow: 'hidden',
     }}>
-      {/* Grid bg */}
       <div style={{
         position: 'absolute', inset: 0,
         backgroundImage: `
@@ -60,7 +61,6 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onSigne
         `,
         backgroundSize: '40px 40px',
       }} />
-      {/* Court arc */}
       <div style={{
         position: 'absolute', bottom: 0, left: '50%',
         transform: 'translateX(-50%)',
@@ -77,7 +77,6 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onSigne
         padding: '40px 24px',
         width: '100%', maxWidth: 380,
       }}>
-        {/* Logo */}
         <div style={{
           fontFamily: 'Bebas Neue, sans-serif',
           fontSize: 'clamp(80px, 24vw, 128px)',
@@ -113,7 +112,7 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onSigne
           </>
         )}
 
-        {/* HOME — not logged in */}
+        {/* HOME */}
         {!isLoggedIn && mode === 'home' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
             <button onClick={handleGoogle} disabled={loading} style={btnMain}>
@@ -122,38 +121,66 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onSigne
                 {loading ? 'SIGNING IN...' : 'CONTINUE WITH GOOGLE'}
               </span>
             </button>
-            <button onClick={() => { setMode('login'); setError('') }} style={btnGhost}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              color: '#4a3a2a', fontFamily: 'Share Tech Mono, monospace', fontSize: '0.75rem',
+            }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,107,0,0.15)' }} />
+              OR
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,107,0,0.15)' }} />
+            </div>
+            <button onClick={() => { setIsNewUser(false); setMode('auth'); setError('') }} style={btnGhost}>
               SIGN IN WITH EMAIL
             </button>
-            <button onClick={() => { setMode('register'); setError('') }} style={{ ...btnGhost, borderColor: 'rgba(255,107,0,0.15)', color: '#6b5c4a' }}>
+            <button onClick={() => { setIsNewUser(true); setMode('auth'); setError('') }} style={{ ...btnGhost, borderColor: 'rgba(255,107,0,0.15)', color: '#6b5c4a' }}>
               CREATE ACCOUNT
             </button>
-            <button onClick={onLeaderboard} style={{ ...btnGhost, borderColor: 'rgba(255,107,0,0.15)', color: '#6b5c4a' }}>
-              🏆 RANKINGS
+            <button onClick={onLeaderboard} style={{ ...btnGhost, borderColor: 'rgba(255,107,0,0.1)', color: '#4a3a2a', fontSize: '1rem' }}>
+              🏆 VIEW RANKINGS
             </button>
           </div>
         )}
 
-        {/* EMAIL LOGIN / REGISTER */}
-        {!isLoggedIn && (mode === 'login' || mode === 'register') && (
+        {/* EMAIL AUTH */}
+        {!isLoggedIn && mode === 'auth' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', animation: 'fadeUp 0.3s ease' }}>
             <div style={{
-              fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.4rem',
-              color: '#ff6b00', letterSpacing: '0.1em', textAlign: 'center', marginBottom: 4,
+              display: 'flex', gap: 0, marginBottom: 4,
+              border: '2px solid rgba(255,107,0,0.3)', borderRadius: 6, overflow: 'hidden',
             }}>
-              {mode === 'login' ? 'SIGN IN' : 'CREATE ACCOUNT'}
+              <button
+                onClick={() => { setIsNewUser(false); setError('') }}
+                style={{
+                  flex: 1, padding: '10px',
+                  background: !isNewUser ? '#ff6b00' : 'transparent',
+                  color: !isNewUser ? '#0a0a0f' : '#6b5c4a',
+                  fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem',
+                  letterSpacing: '0.1em', border: 'none', cursor: 'pointer',
+                  transition: 'background 0.2s, color 0.2s',
+                }}
+              >SIGN IN</button>
+              <button
+                onClick={() => { setIsNewUser(true); setError('') }}
+                style={{
+                  flex: 1, padding: '10px',
+                  background: isNewUser ? '#ff6b00' : 'transparent',
+                  color: isNewUser ? '#0a0a0f' : '#6b5c4a',
+                  fontFamily: 'Bebas Neue, sans-serif', fontSize: '1.1rem',
+                  letterSpacing: '0.1em', border: 'none', cursor: 'pointer',
+                  borderLeft: '1px solid rgba(255,107,0,0.3)',
+                  transition: 'background 0.2s, color 0.2s',
+                }}
+              >REGISTER</button>
             </div>
 
             <input
-              type="email"
-              placeholder="EMAIL"
+              type="email" placeholder="EMAIL"
               value={email}
               onChange={e => { setEmail(e.target.value); setError('') }}
               style={inputStyle}
             />
             <input
-              type="password"
-              placeholder="PASSWORD"
+              type="password" placeholder="PASSWORD (MIN 6 CHARS)"
               value={password}
               onChange={e => { setPassword(e.target.value); setError('') }}
               onKeyDown={e => e.key === 'Enter' && handleEmail()}
@@ -167,7 +194,7 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onSigne
             )}
 
             <button onClick={handleEmail} disabled={loading} style={btnMain}>
-              {loading ? 'LOADING...' : mode === 'login' ? 'SIGN IN' : 'REGISTER'}
+              {loading ? 'LOADING...' : isNewUser ? 'CREATE ACCOUNT' : 'SIGN IN'}
             </button>
             <button onClick={() => { setMode('home'); setError(''); setEmail(''); setPassword('') }} style={btnGhost}>
               ← BACK
