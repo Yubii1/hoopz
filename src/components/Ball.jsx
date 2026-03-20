@@ -71,7 +71,7 @@ export default function Ball({ onShoot, disabled }) {
       position: 'absolute',
       bottom: '14%', left: '50%',
       transform: 'translateX(-50%)',
-      width: 80, height: 80,
+      width: 100, height: 100,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       {/* Aim guide */}
@@ -95,7 +95,7 @@ export default function Ball({ onShoot, disabled }) {
         onTouchStart={onStart}
         onMouseDown={onStart}
         style={{
-          fontSize: 52,
+          fontSize: 72,
           transform: pressed ? 'scale(0.88)' : 'scale(1)',
           transition: 'transform 0.1s',
           filter: 'drop-shadow(0 6px 16px rgba(255,107,0,0.5))',
