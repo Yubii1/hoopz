@@ -3,7 +3,7 @@ import { getFirestore } from 'firebase/firestore'
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  browserLocalPersistence, 
+  indexedDBLocalPersistence, 
   setPersistence 
 } from 'firebase/auth'
 
@@ -21,4 +21,4 @@ export const db = getFirestore(app)
 export const auth = getAuth(app)
 export const googleProvider = new GoogleAuthProvider()
 
-setPersistence(auth, browserLocalPersistence).catch(console.error)
+setPersistence(auth, indexedDBLocalPersistence).catch(console.error)
