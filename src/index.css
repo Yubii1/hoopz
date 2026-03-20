@@ -1,0 +1,85 @@
+/* src/index.css */
+:root {
+  --bg: #0a0a0f;
+  --court: #0f0d08;
+  --orange: #ff6b00;
+  --orange-glow: rgba(255, 107, 0, 0.4);
+  --orange-dim: rgba(255, 107, 0, 0.15);
+  --gold: #ffd700;
+  --silver: #c0c0c0;
+  --bronze: #cd7f32;
+  --neon-green: #00ff87;
+  --neon-blue: #00cfff;
+  --text: #f0e6d3;
+  --text-dim: #6b5c4a;
+  --surface: #16130e;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Barlow Condensed', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+input {
+  outline: none;
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0) scaleX(1) scaleY(1); }
+  45%       { transform: translateY(-30px) scaleX(1.04) scaleY(0.96); }
+  90%       { transform: translateY(0) scaleX(0.95) scaleY(1.05); }
+}
+
+@keyframes scorePop {
+  0%   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  70%  { opacity: 1; transform: translate(-50%, -55px) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -75px) scale(0.8); }
+}
+
+@keyframes prizePulse {
+  0%, 100% { box-shadow: 0 0 28px rgba(255, 215, 0, 0.3); }
+  50%       { box-shadow: 0 0 52px rgba(255, 215, 0, 0.65); }
+}
+
+@keyframes netSwish {
+  0%, 100% { transform: scaleX(1); }
+  50%       { transform: scaleX(0.84) scaleY(1.1); }
+}
+
+@keyframes hoopShake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25%       { transform: translateX(-4px) rotate(-2deg); }
+  75%       { transform: translateX(4px) rotate(2deg); }
+}
