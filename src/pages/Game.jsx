@@ -52,7 +52,7 @@ export default function Game({ playerName, onEnd }) {
   useInterval(() => {
     if (gameOverRef.current) return
     const elapsed = GAME_DURATION - timeLeftRef.current
-    const speed = 1.5 + elapsed * 0.12
+    const speed = 1.5 + elapsed * 0.12// increase speed over time
     let pos = hoopLeftRef.current + hoopDirRef.current * speed
     if (pos >= 85) { pos = 85; hoopDirRef.current = -1 }
     if (pos <= 15) { pos = 15; hoopDirRef.current = 1 }
@@ -81,43 +81,55 @@ export default function Game({ playerName, onEnd }) {
     })
   }
 
-  function handleShoot(dx, dy, power) {
-    if (gameOverRef.current || shooting) return
-    setShooting(true)
-    shotsTakenRef.current++
+ function handleShoot(dx, dy, power) {
+  if (gameOverRef.current || shooting) return
+  setShooting(true)
+  shotsTakenRef.current++
 
-    const gameArea = gameAreaRef.current
-    const hoopEl = hoopRef.current
-    if (!gameArea || !hoopEl) return
+  const gameArea = gameAreaRef.current
+  const hoopEl = hoopRef.current
+  if (!gameArea || !hoopEl) return
 
-    const gameRect = gameArea.getBoundingClientRect()
-    const hoopRect = hoopEl.getBoundingClientRect()
+  const gameRect = gameArea.getBoundingClientRect()
+  const hoopRect = hoopEl.getBoundingClientRect()
 
-    const startX = gameRect.width / 2
-    const startY = gameRect.height * 0.86
-    const targetX = hoopRect.left + hoopRect.width / 2 - gameRect.left
-    const targetY = hoopRect.top + hoopRect.height / 2 - gameRect.top
+  const startX = gameRect.width / 2
+  const startY = gameRect.height * 0.86
+  const hoopX = hoopRect.left + hoopRect.width / 2 - gameRect.left
+  const hoopY = hoopRect.top + hoopRect.height / 2 - gameRect.top
 
-    // Accuracy
-    const flickAngle = Math.atan2(-dy, dx)
-    const idealAngle = Math.atan2(-(startY - targetY), targetX - startX)
-    const diff = Math.abs(flickAngle - idealAngle)
-    const normDiff = Math.min(diff, Math.PI * 2 - diff)
-    const normPower = Math.min(power, 200) / 200
-    const powerScore = 1 - Math.abs(normPower - 0.55)
-    const accuracy = Math.max(0, (1 - normDiff / 1.2) * 0.7 + powerScore * 0.3)
-    const isBasket = accuracy > 1
+  // Actual flick direction — where the ball will fly
+  const norm = Math.sqrt(dx * dx + dy * dy)
+  const dirX = dx / norm
+  const dirY = dy / norm
 
-    const shotId = Date.now()
-    setShots(prev => [...prev, { id: shotId, startX, startY, targetX, targetY, isBasket }])
+  // Project ball forward in flick direction
+  const distance = Math.min(power * 2.8, gameRect.height * 0.95)
+  const rawLandX = startX + dirX * distance
+  const rawLandY = startY + dirY * distance
 
-    // resolve after ball animation
-    setTimeout(() => {
-      setShooting(false)
-      setShots(prev => prev.filter(s => s.id !== shotId))
-      resolveShot(isBasket, targetX, targetY - 40, gameRect)
-    }, 500)
-  }
+  // Check accuracy — how close does the flick land to the hoop?
+  const distToHoop = Math.sqrt(
+    Math.pow(rawLandX - hoopX, 2) + Math.pow(rawLandY - hoopY, 2)
+  )
+  const isBasket = distToHoop < 80 && dy < 0 // must swipe UP and land near hoop
+
+  const shotId = Date.now()
+  setShots(prev => [...prev, {
+    id: shotId,
+    startX,
+    startY,
+    targetX: rawLandX,  // ball flies toward actual swipe direction
+    targetY: rawLandY,
+    isBasket,
+  }])
+
+  setTimeout(() => {
+    setShooting(false)
+    setShots(prev => prev.filter(s => s.id !== shotId))
+    resolveShot(isBasket, rawLandX, rawLandY - 40)
+  }, 500)
+}
 
   function resolveShot(isBasket, x, y) {
     const popId = Date.now() + Math.random()
