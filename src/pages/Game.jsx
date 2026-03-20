@@ -80,9 +80,12 @@ export default function Game({ playerName, onEnd }) {
       maxCombo: maxComboRef.current,
     })
   }
-
- function handleShoot(dx, dy, power) {
+function handleShoot(dx, dy, power) {
   if (gameOverRef.current || shooting) return
+
+  // Block downward swipes completely
+  if (dy > 0) return
+
   setShooting(true)
   shotsTakenRef.current++
 
@@ -98,28 +101,28 @@ export default function Game({ playerName, onEnd }) {
   const hoopX = hoopRect.left + hoopRect.width / 2 - gameRect.left
   const hoopY = hoopRect.top + hoopRect.height / 2 - gameRect.top
 
-  // Actual flick direction — where the ball will fly
+  // Normalize flick direction — dy is negative when swiping up so flip it
   const norm = Math.sqrt(dx * dx + dy * dy)
   const dirX = dx / norm
-  const dirY = dy / norm
+  const dirY = dy / norm  // already negative (upward), so ball flies up naturally
 
-  // Project ball forward in flick direction
+  // Project ball in flick direction
   const distance = Math.min(power * 2.8, gameRect.height * 0.95)
   const rawLandX = startX + dirX * distance
-  const rawLandY = startY + dirY * distance
+  const rawLandY = startY + dirY * distance  // goes UP because dirY is negative
 
-  // Check accuracy — how close does the flick land to the hoop?
+  // Score if ball lands close enough to hoop
   const distToHoop = Math.sqrt(
     Math.pow(rawLandX - hoopX, 2) + Math.pow(rawLandY - hoopY, 2)
   )
-  const isBasket = distToHoop < 80 && dy < 0 // must swipe UP and land near hoop
+  const isBasket = distToHoop < 80
 
   const shotId = Date.now()
   setShots(prev => [...prev, {
     id: shotId,
     startX,
     startY,
-    targetX: rawLandX,  // ball flies toward actual swipe direction
+    targetX: rawLandX,
     targetY: rawLandY,
     isBasket,
   }])
