@@ -112,7 +112,7 @@ useInterval(() => {
     const normPower = Math.min(power, 200) / 200
     const powerScore = 1 - Math.abs(normPower - 0.55)
     const accuracy = Math.max(0, (1 - normDiff / 1.2) * 0.7 + powerScore * 0.3)
-    const isBasket = accuracy > 0.6
+    const isBasket = accuracy > 1
 
     const shotId = Date.now()
     setShots(prev => [...prev, { id: shotId, startX, startY, targetX, targetY, isBasket }])
