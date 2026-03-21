@@ -2,8 +2,8 @@
 import { useState } from 'react'
 import { signInWithGoogle, loginWithEmail, registerWithEmail } from '../firebase/authHelpers'
 
-export default function Landing({ user, username, onPlay, onLeaderboard, onSignedIn }) {
-  const [mode, setMode] = useState('home') // home | auth
+export default function Landing({ user, username, onPlay, onLeaderboard, onBattle, onSignedIn }) {
+  const [mode, setMode] = useState('home')
   const [isNewUser, setIsNewUser] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -108,11 +108,14 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onSigne
               WELCOME BACK, <span style={{ color: '#ff6b00' }}>{username}</span>
             </div>
             <button onClick={onPlay} style={btnMain}>LET'S BALL 🏀</button>
+            <button onClick={onBattle} style={{ ...btnGhost, marginTop: 10, borderColor: 'rgba(255,107,0,0.5)' }}>
+              ⚡ FRIEND BATTLE
+            </button>
             <button onClick={onLeaderboard} style={{ ...btnGhost, marginTop: 10 }}>🏆 RANKINGS</button>
           </>
         )}
 
-        {/* HOME */}
+        {/* HOME (not logged in) */}
         {!isLoggedIn && mode === 'home' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
             <button onClick={handleGoogle} disabled={loading} style={btnMain}>

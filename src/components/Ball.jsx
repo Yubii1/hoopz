@@ -1,5 +1,6 @@
 // src/components/Ball.jsx
 import { useRef, useEffect, useState } from 'react'
+import { unlockAudio } from '../hooks/useSound'
 
 export default function Ball({ onShoot, disabled }) {
   const [pressed, setPressed] = useState(false)
@@ -17,6 +18,7 @@ export default function Ball({ onShoot, disabled }) {
   function onStart(e) {
     if (disabled) return
     e.preventDefault()
+    unlockAudio() // unlock on first real touch gesture
     dragStart.current = getXY(e)
     setPressed(true)
     setAiming(true)
@@ -74,7 +76,6 @@ export default function Ball({ onShoot, disabled }) {
       width: 100, height: 100,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      {/* Aim guide */}
       {aiming && aimLength > 10 && (
         <div style={{
           position: 'absolute',
@@ -89,7 +90,6 @@ export default function Ball({ onShoot, disabled }) {
         }} />
       )}
 
-      {/* Ball */}
       <div
         ref={ballRef}
         onTouchStart={onStart}

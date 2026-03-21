@@ -1,14 +1,17 @@
 // src/App.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
 import { getUsername } from './firebase/authHelpers'
+import { listenBattle } from './firebase/battle'
 
 import Landing from './pages/Landing'
 import UsernameSetup from './pages/UsernameSetup'
 import Game from './pages/Game'
 import Results from './pages/Results'
 import Leaderboard from './pages/Leaderboard'
+import BattleLobby from './pages/BattleLobby'
+import BattleResults from './pages/BattleResults'
 
 export default function App() {
   const [screen, setScreen] = useState('landing')
@@ -16,6 +19,14 @@ export default function App() {
   const [username, setUsername] = useState('')
   const [gameResult, setGameResult] = useState(null)
   const [authReady, setAuthReady] = useState(false)
+
+  // Battle state
+  const [battleCode, setBattleCode] = useState(null)
+  const [battleRole, setBattleRole] = useState(null)
+  const [opponentName, setOpponentName] = useState(null)
+  const [opponentScore, setOpponentScore] = useState(0)
+  const [battleFinalData, setBattleFinalData] = useState(null)
+  const battleUnsubRef = useRef(null)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -38,6 +49,53 @@ export default function App() {
     return unsub
   }, [])
 
+  useEffect(() => {
+    return () => { if (battleUnsubRef.current) battleUnsubRef.current() }
+  }, [])
+
+  function startBattle({ code, role, opponentName: oppName }) {
+    setBattleCode(code)
+    setBattleRole(role)
+    setOpponentName(oppName)
+    setOpponentScore(0)
+
+    if (battleUnsubRef.current) battleUnsubRef.current()
+    const stop = listenBattle(code, (data) => {
+      if (!data) return
+      const oppRole = role === 'host' ? 'guest' : 'host'
+      const opp = data[oppRole]
+      if (opp) {
+        if (!oppName && opp.name) setOpponentName(opp.name)
+        setOpponentScore(opp.score ?? 0)
+      }
+      if (data.status === 'finished') {
+        stop()
+        const myData = data[role]
+        const theirData = data[oppRole]
+        setBattleFinalData({
+          myScore: myData?.score ?? 0,
+          opponentScore: theirData?.score ?? 0,
+          opponentName: theirData?.name ?? 'OPPONENT',
+          prevBattleCode: code,
+          myRole: role,
+        })
+        setScreen('battle-results')
+      }
+    })
+    battleUnsubRef.current = stop
+    setScreen('game-battle')
+  }
+
+  function resetBattle() {
+    if (battleUnsubRef.current) battleUnsubRef.current()
+    battleUnsubRef.current = null
+    setBattleCode(null)
+    setBattleRole(null)
+    setOpponentName(null)
+    setOpponentScore(0)
+    setBattleFinalData(null)
+  }
+
   if (!authReady) return <Splash />
 
   return (
@@ -48,6 +106,7 @@ export default function App() {
           username={username}
           onPlay={() => setScreen('game')}
           onLeaderboard={() => setScreen('leaderboard')}
+          onBattle={() => setScreen('battle-lobby')}
           onSignedIn={(firebaseUser) => {
             setUser(firebaseUser)
             setScreen('username-setup')
@@ -70,6 +129,22 @@ export default function App() {
           onEnd={(result) => { setGameResult(result); setScreen('results') }}
         />
       )}
+      {screen === 'game-battle' && (
+        <Game
+          user={user}
+          playerName={username}
+          battleCode={battleCode}
+          battleRole={battleRole}
+          opponentName={opponentName}
+          opponentScore={opponentScore}
+          onEnd={(result) => {
+            setGameResult(result)
+            setTimeout(() => {
+              setScreen(prev => prev === 'game-battle' ? 'battle-results' : prev)
+            }, 5000)
+          }}
+        />
+      )}
       {screen === 'results' && (
         <Results
           result={gameResult}
@@ -78,11 +153,36 @@ export default function App() {
           onLeaderboard={() => setScreen('leaderboard')}
         />
       )}
+      {screen === 'battle-results' && battleFinalData && (
+        <BattleResults
+          myName={username}
+          myScore={battleFinalData.myScore}
+          opponentName={battleFinalData.opponentName}
+          opponentScore={battleFinalData.opponentScore}
+          prevBattleCode={battleFinalData.prevBattleCode}
+          myRole={battleFinalData.myRole}
+          onRematch={(battleParams) => {
+            resetBattle()
+            startBattle(battleParams)
+          }}
+          onHome={() => {
+            resetBattle()
+            setScreen('landing')
+          }}
+        />
+      )}
       {screen === 'leaderboard' && (
         <Leaderboard
           playerName={username}
           onBack={() => setScreen('landing')}
           onPlay={() => setScreen(user ? 'game' : 'landing')}
+        />
+      )}
+      {screen === 'battle-lobby' && (
+        <BattleLobby
+          playerName={username}
+          onBattleStart={startBattle}
+          onBack={() => setScreen('landing')}
         />
       )}
     </div>
