@@ -58,7 +58,7 @@ useInterval(() => {
   if (elapsed < 5) return
 
   // Gradually increase speed after 5 seconds
-  const speed = (elapsed - 5) * 0.20 + 0.5 // Oscillate between 15% and 85% of the width
+  const speed = (elapsed - 2) * 0.20 + 0.5 // Oscillate between 15% and 85% of the width
   let pos = hoopLeftRef.current + hoopDirRef.current * speed
   if (pos >= 85) { pos = 85; hoopDirRef.current = -1 }
   if (pos <= 15) { pos = 15; hoopDirRef.current = 1 }
