@@ -26,6 +26,7 @@ export default function App() {
   const [opponentName, setOpponentName] = useState(null)
   const [opponentScore, setOpponentScore] = useState(0)
   const [battleFinalData, setBattleFinalData] = useState(null)
+  const [justFinishedBattle, setJustFinishedBattle] = useState(false)
   const battleUnsubRef = useRef(null)
 
   useEffect(() => {
@@ -167,7 +168,8 @@ export default function App() {
           }}
           onHome={() => {
             resetBattle()
-            setScreen('landing')
+            setJustFinishedBattle(true)   // ← add this line
+            setScreen('battle-lobby')
           }}
         />
       )}
@@ -183,6 +185,7 @@ export default function App() {
           playerName={username}
           onBattleStart={startBattle}
           onBack={() => setScreen('landing')}
+          justFinishedBattle={justFinishedBattle}
         />
       )}
     </div>

@@ -1,9 +1,8 @@
 // src/pages/BattleLobby.jsx
-import { useState, useEffect } from 'react'
 import { createBattle, joinBattle, generateCode, listenBattle, deleteBattle, getBattleHistory } from '../firebase/battle'
 import LoadingScreen from '../components/LoadingScreen'
-
-export default function BattleLobby({ playerName, onBattleStart, onBack }) {
+import { useState, useEffect, useCallback } from 'react'
+export default function BattleLobby({ playerName, onBattleStart, onBack,justFinishedBattle }) {
   const [mode, setMode] = useState('menu')
   const [code, setCode] = useState('')
   const [inputCode, setInputCode] = useState('')
@@ -15,11 +14,18 @@ export default function BattleLobby({ playerName, onBattleStart, onBack }) {
   const [history, setHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(true)
 
-  useEffect(() => {
+  const fetchHistory = useCallback(() => {
+    setHistoryLoading(true)
     getBattleHistory(playerName)
       .then(data => { setHistory(data); setHistoryLoading(false) })
       .catch(() => setHistoryLoading(false))
   }, [playerName])
+
+  useEffect(() => {
+    const delay = justFinishedBattle ? 1500 : 0
+    const t = setTimeout(fetchHistory, delay)
+    return () => clearTimeout(t)
+  }, [fetchHistory, justFinishedBattle])
 
   async function handleCreate() {
     setLoading(true)
@@ -63,7 +69,7 @@ export default function BattleLobby({ playerName, onBattleStart, onBack }) {
 
   function handleCancel() {
     if (unsub) unsub()
-    if (code) deleteBattle(code).catch(() => {})
+    if (code) deleteBattle(code).catch(() => { })
     setMode('menu')
     setCode('')
     setStatus('')

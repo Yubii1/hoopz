@@ -236,7 +236,7 @@ export default function Game({
 
   // TUNE THESE VALUES:
   // 0.15 is tight (pro), 0.25 is medium, 0.40 is very easy.
-  const aimOk = angleDiff < 0.15
+  const aimOk = angleDiff < 0.12
   
   // dy must be negative (swiping UP) and power must be at least 50
   const isBasket = aimOk && dy < -50
