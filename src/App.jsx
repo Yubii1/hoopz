@@ -4,7 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
 import { getUsername } from './firebase/authHelpers'
 import { listenBattle } from './firebase/battle'
-
+import PlayerHistory from './pages/PlayerHistory'
 import Landing from './pages/Landing'
 import UsernameSetup from './pages/UsernameSetup'
 import Game from './pages/Game'
@@ -106,6 +106,7 @@ export default function App() {
           user={user}
           username={username}
           onPlay={() => setScreen('game')}
+           onHistory={() => setScreen('history')}
           onLeaderboard={() => setScreen('leaderboard')}
           onBattle={() => setScreen('battle-lobby')}
           onSignedIn={(firebaseUser) => {
@@ -146,6 +147,12 @@ export default function App() {
           }}
         />
       )}
+      {screen === 'history' && (
+  <PlayerHistory
+    playerName={username}
+    onBack={() => setScreen('landing')}
+  />
+)}
       {screen === 'results' && (
         <Results
           result={gameResult}

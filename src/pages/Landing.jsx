@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { signInWithGoogle, loginWithEmail, registerWithEmail } from '../firebase/authHelpers'
 
-export default function Landing({ user, username, onPlay, onLeaderboard, onBattle, onSignedIn }) {
+export default function Landing({ user, username, onPlay, onLeaderboard, onBattle, onSignedIn, onHistory }) {
   const [mode, setMode] = useState('home')
   const [isNewUser, setIsNewUser] = useState(false)
   const [email, setEmail] = useState('')
@@ -112,6 +112,9 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onBattl
               ⚡ FRIEND BATTLE
             </button>
             <button onClick={onLeaderboard} style={{ ...btnGhost, marginTop: 10 }}>🏆 RANKINGS</button>
+            <button onClick={onHistory} style={{ ...btnGhost, marginTop: 10, borderColor: 'rgba(255,107,0,0.3)' }}>
+  📊 MY STATS
+</button>
           </>
         )}
 
