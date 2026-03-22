@@ -16,7 +16,7 @@ import {
 
 const GAME_DURATION = 30
 const COUNTDOWN_FROM = 3
-const DISCONNECT_TIMEOUT = 15000 // 15s no score change = disconnected
+const DISCONNECT_TIMEOUT = 45000 // 45s no score change = disconnected
 
 export default function Game({
   playerName, onEnd,
