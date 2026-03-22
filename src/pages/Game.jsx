@@ -217,8 +217,8 @@ export default function Game({
     let angleDiff = Math.abs(swipeAngle - idealAngle)
     if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff
 
-    const aimOk = angleDiff < 0.90
-    const isBasket = aimOk && power >= 35 && power <= 430
+    const aimOk = angleDiff < 0.40
+    const isBasket = aimOk && power >= 20 && power <= 350
 
     const shotId = Date.now()
     setShots(prev => [...prev, { id: shotId, startX, startY, targetX, targetY, isBasket }])
@@ -236,8 +236,16 @@ export default function Game({
       shotsMadeRef.current++
       comboRef.current++
       if (comboRef.current > maxComboRef.current) maxComboRef.current = comboRef.current
-      const bonus = comboRef.current >= 5 ? 3 : comboRef.current >= 3 ? 2 : 1
-      const pts = 2 * bonus
+       const combo = comboRef.current
+const bonus =
+  combo >= 8 ? 8 :
+  combo >= 7 ? 7 :
+  combo >= 6 ? 6 :
+  combo >= 5 ? 5 :
+  combo >= 4 ? 4 :
+  combo >= 3 ? 3 :
+  combo >= 2 ? 2 : 1
+const pts = 50 * bonus
       scoreRef.current += pts
       setScore(scoreRef.current)
       if (battleCode && battleRole) updateScore(battleCode, battleRole, scoreRef.current).catch(() => {})
@@ -308,6 +316,17 @@ export default function Game({
         <div ref={hoopRef} style={{ position: 'absolute', top: '10%', left: `${hoopLeft}%`, transform: 'translateX(-50%)', transition: 'left 0.15s linear', animation: hoopShaking ? 'hoopShake 0.25s ease' : 'none' }}>
           <Hoop leftPercent={0} shaking={false} swishing={hoopSwishing} />
         </div>
+
+        {/* Tip banner */}
+<div style={{
+  position: 'absolute', bottom: '30%', width: '100%',
+  textAlign: 'center', pointerEvents: 'none',
+  fontFamily: 'Share Tech Mono, monospace',
+  fontSize: '0.62rem', color: 'rgba(107,92,74,0.7)',
+  letterSpacing: '0.15em',
+}}>
+  SWIPE UP FAST FOR MORE POWER · AIM FOR THE HOOP
+</div>
 
         {shots.map(shot => <FlyingBall key={shot.id} shot={shot} onComplete={() => {}} />)}
         <ScorePop pops={pops} />
