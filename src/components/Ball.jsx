@@ -30,7 +30,7 @@ export default function Ball({ onShoot, disabled }) {
     const cur = getXY(e)
     const dx = cur.x - dragStart.current.x
     const dy = cur.y - dragStart.current.y
-    const angle = Math.atan2(-dx, dy) * (180 / Math.PI)
+    const angle = Math.atan2(dx, -dy) * (180 / Math.PI)
     const dist = Math.min(Math.sqrt(dx * dx + dy * dy), 130)
     setAimAngle(angle)
     setAimLength(dist)
@@ -46,8 +46,8 @@ export default function Ball({ onShoot, disabled }) {
       ? { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }
       : { x: e.clientX, y: e.clientY }
 
-    const dx = dragStart.current.x - cur.x
-    const dy = dragStart.current.y - cur.y
+    const dx = cur.x - dragStart.current.x 
+    const dy = cur.y - dragStart.current.y 
     const power = Math.sqrt(dx * dx + dy * dy)
     dragStart.current = null
 
@@ -73,7 +73,7 @@ export default function Ball({ onShoot, disabled }) {
       position: 'absolute',
       bottom: '14%', left: '50%',
       transform: 'translateX(-50%)',
-      width: 100, height: 100,
+      width: 70, height: 70,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       {aiming && aimLength > 10 && (
@@ -95,7 +95,7 @@ export default function Ball({ onShoot, disabled }) {
         onTouchStart={onStart}
         onMouseDown={onStart}
         style={{
-          fontSize: 72,
+          fontSize: 50,
           transform: pressed ? 'scale(0.88)' : 'scale(1)',
           transition: 'transform 0.1s',
           filter: 'drop-shadow(0 6px 16px rgba(255,107,0,0.5))',

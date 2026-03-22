@@ -92,7 +92,7 @@ export default function Game({
     setDisconnectMsg(`${opponentName ?? 'OPPONENT'} DISCONNECTED — YOU WIN!`)
     try {
       await markDisconnected(battleCode, battleRole === 'host' ? 'guest' : 'host')
-    } catch (e) {}
+    } catch (e) { }
     setTimeout(() => endGame(true), 2500)
   }
 
@@ -130,14 +130,14 @@ export default function Game({
   useInterval(() => {
     if (gameOverRef.current) return
     const elapsed = GAME_DURATION - timeLeftRef.current
-    if (elapsed < 3) return
-    const speed = (elapsed - 2) * 0.20 + 0.5
+    if (elapsed < 2) return
+    const speed = (elapsed * 0.12) + 1.0
     let pos = hoopLeftRef.current + hoopDirRef.current * speed
     if (pos >= 85) { pos = 85; hoopDirRef.current = -1 }
     if (pos <= 15) { pos = 15; hoopDirRef.current = 1 }
     hoopLeftRef.current = pos
     setHoopLeft(pos)
-  }, isPlaying && !gameOver ? 100 : null)
+  }, isPlaying && !gameOver ? 50 : null)
 
   async function endGame(fromDisconnect = false) {
     if (gameOverRef.current) return
@@ -183,7 +183,7 @@ export default function Game({
     try {
       // Mark self as done with 0 override so opponent wins clearly
       await markDone(battleCode, battleRole, scoreRef.current)
-    } catch (e) {}
+    } catch (e) { }
     onEnd({
       score: scoreRef.current,
       rank: null,
@@ -195,60 +195,92 @@ export default function Game({
   }
 
   function handleShoot(dx, dy, power) {
-    if (gameOverRef.current || shooting || !isPlaying) return
-    setShooting(true)
-    shotsTakenRef.current++
-    playShootWhoosh()
+  if (gameOverRef.current || shooting || !isPlaying) return
+  setShooting(true)
+  shotsTakenRef.current++
+  playShootWhoosh()
 
-    const gameArea = gameAreaRef.current
-    const hoopEl = hoopRef.current
-    if (!gameArea || !hoopEl) return
+  const gameArea = gameAreaRef.current
+  const hoopEl = hoopRef.current
+  if (!gameArea || !hoopEl) return
 
-    const gameRect = gameArea.getBoundingClientRect()
-    const hoopRect = hoopEl.getBoundingClientRect()
+  const gameRect = gameArea.getBoundingClientRect()
+  const hoopRect = hoopEl.getBoundingClientRect()
 
-    const startX = gameRect.width / 2
-    const startY = gameRect.height * 0.86
-    const targetX = hoopRect.left + hoopRect.width / 2 - gameRect.left
-    const targetY = hoopRect.top + hoopRect.height / 2 - gameRect.top
+  // 1. Starting position (The Ball at bottom center)
+  const startX = gameRect.width / 2
+  const startY = gameRect.height * 0.86
 
-    const idealAngle = Math.atan2(-(startY - targetY), targetX - startX)
-    const swipeAngle = Math.atan2(-dy, dx)
-    let angleDiff = Math.abs(swipeAngle - idealAngle)
-    if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff
+  // 2. Target position (The Hoop)
+  const hoopX = hoopRect.left + hoopRect.width / 2 - gameRect.left
+  const hoopY = hoopRect.top + hoopRect.height / 2 - gameRect.top
 
-    const aimOk = angleDiff < 0.40
-    const isBasket = aimOk && power >= 20 && power <= 350
+  // 3. Calculate "Actual" trajectory based on the swipe direction
+  const magnitude = Math.sqrt(dx * dx + dy * dy)
+  const dirX = dx / magnitude
+  const dirY = dy / magnitude
+  
+  // Project the ball far enough to pass the hoop if it misses
+  const travelDist = 30 + (power * 3) // Base distance + power scaling
+  const projectedX = startX + (dirX * travelDist)
+  const projectedY = startY + (dirY * travelDist)
 
-    const shotId = Date.now()
-    setShots(prev => [...prev, { id: shotId, startX, startY, targetX, targetY, isBasket }])
+  // 4. FIX: Aim Logic (Using consistent screen coordinates)
+  // idealAngle: vector from ball to hoop
+  const idealAngle = Math.atan2(hoopY - startY, hoopX - startX)
+  // swipeAngle: vector of the user's flick
+  const swipeAngle = Math.atan2(dy, dx)
 
-    setTimeout(() => {
-      setShooting(false)
-      setShots(prev => prev.filter(s => s.id !== shotId))
-      resolveShot(isBasket, targetX, targetY - 40)
-    }, 500)
-  }
+  let angleDiff = Math.abs(swipeAngle - idealAngle)
+  if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff
 
+  // TUNE THESE VALUES:
+  // 0.15 is tight (pro), 0.25 is medium, 0.40 is very easy.
+  const aimOk = angleDiff < 0.15
+  
+  // dy must be negative (swiping UP) and power must be at least 50
+  const isBasket = aimOk && dy < -50
+
+  // 5. Resolution
+  const finalTargetX = isBasket ? hoopX : projectedX
+  const finalTargetY = isBasket ? hoopY : projectedY
+
+  const shotId = Date.now()
+  setShots(prev => [...prev, { 
+    id: shotId, 
+    startX, 
+    startY, 
+    targetX: finalTargetX, 
+    targetY: finalTargetY, 
+    isBasket 
+  }])
+
+  // We wait for the ball animation to "reach" the hoop before scoring
+  setTimeout(() => {
+    setShooting(false)
+    setShots(prev => prev.filter(s => s.id !== shotId))
+    resolveShot(isBasket, hoopX, hoopY - 40)
+  }, 450) // Matches animation duration
+}
   function resolveShot(isBasket, x, y) {
     const popId = Date.now() + Math.random()
     if (isBasket) {
       shotsMadeRef.current++
       comboRef.current++
       if (comboRef.current > maxComboRef.current) maxComboRef.current = comboRef.current
-       const combo = comboRef.current
-const bonus =
-  combo >= 8 ? 8 :
-  combo >= 7 ? 7 :
-  combo >= 6 ? 6 :
-  combo >= 5 ? 5 :
-  combo >= 4 ? 4 :
-  combo >= 3 ? 3 :
-  combo >= 2 ? 2 : 1
-const pts = 50 * bonus
+      const combo = comboRef.current
+      const bonus =
+        combo >= 8 ? 8 :
+          combo >= 7 ? 7 :
+            combo >= 6 ? 6 :
+              combo >= 5 ? 5 :
+                combo >= 4 ? 4 :
+                  combo >= 3 ? 3 :
+                    combo >= 2 ? 2 : 1
+      const pts = 50 * bonus
       scoreRef.current += pts
       setScore(scoreRef.current)
-      if (battleCode && battleRole) updateScore(battleCode, battleRole, scoreRef.current).catch(() => {})
+      if (battleCode && battleRole) updateScore(battleCode, battleRole, scoreRef.current).catch(() => { })
       playSwish()
       if (comboRef.current >= 3) playCombo(comboRef.current)
       setPops(prev => [...prev, { id: popId, x, y, text: `+${pts}`, miss: false }])
@@ -318,17 +350,18 @@ const pts = 50 * bonus
         </div>
 
         {/* Tip banner */}
-<div style={{
-  position: 'absolute', bottom: '30%', width: '100%',
-  textAlign: 'center', pointerEvents: 'none',
-  fontFamily: 'Share Tech Mono, monospace',
-  fontSize: '0.62rem', color: 'rgba(107,92,74,0.7)',
-  letterSpacing: '0.15em',
-}}>
-  SWIPE UP FAST FOR MORE POWER · AIM FOR THE HOOP
-</div>
+        <div style={{
+          position: 'absolute', bottom: '30%', width: '100%',
+          textAlign: 'center', pointerEvents: 'none',
+          fontFamily: 'Share Tech Mono, monospace',
+          fontSize: '0.62rem', color: 'rgba(107,92,74,0.7)',
+          letterSpacing: '0.15em',
+        }}>
+          AIM FOR THE HOOP
+          WELL NOT TOO HARD, JUST A LITTLE BIT 😜
+        </div>
 
-        {shots.map(shot => <FlyingBall key={shot.id} shot={shot} onComplete={() => {}} />)}
+        {shots.map(shot => <FlyingBall key={shot.id} shot={shot} onComplete={() => { }} />)}
         <ScorePop pops={pops} />
 
         {/* Combo text */}

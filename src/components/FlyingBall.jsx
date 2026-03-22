@@ -6,7 +6,7 @@ export default function FlyingBall({ shot, onComplete }) {
   const ref = useRef(null)
 
   useEffect(() => {
-    const duration = 480
+    const duration = 450
     const start = performance.now()
 
     const midX = (startX + targetX) / 2 + (Math.random() - 0.5) * 40
@@ -21,8 +21,8 @@ export default function FlyingBall({ shot, onComplete }) {
       const t = Math.min((now - start) / duration, 1)
       const x = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * midX + t * t * landX
       const y = (1 - t) * (1 - t) * startY + 2 * (1 - t) * t * midY + t * t * landY
-      const spin = t * 360 * 2
-      const scale = 1 - t * 0.2
+      const spin = t * 720
+      const scale = 1 - t * 0.3
 
       if (ref.current) {
         ref.current.style.left = x + 'px'
