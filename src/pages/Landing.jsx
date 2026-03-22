@@ -36,11 +36,11 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onBattl
     } catch (e) {
       const msg = e.code === 'auth/email-already-in-use' ? 'EMAIL ALREADY REGISTERED!'
         : e.code === 'auth/user-not-found' ? 'NO ACCOUNT FOUND!'
-        : e.code === 'auth/wrong-password' ? 'WRONG PASSWORD!'
-        : e.code === 'auth/invalid-credential' ? 'WRONG EMAIL OR PASSWORD!'
-        : e.code === 'auth/weak-password' ? 'PASSWORD TOO WEAK! MIN 6 CHARS.'
-        : e.code === 'auth/invalid-email' ? 'INVALID EMAIL!'
-        : 'SOMETHING WENT WRONG.'
+          : e.code === 'auth/wrong-password' ? 'WRONG PASSWORD!'
+            : e.code === 'auth/invalid-credential' ? 'WRONG EMAIL OR PASSWORD!'
+              : e.code === 'auth/weak-password' ? 'PASSWORD TOO WEAK! MIN 6 CHARS.'
+                : e.code === 'auth/invalid-email' ? 'INVALID EMAIL!'
+                  : 'SOMETHING WENT WRONG.'
       setError(msg)
       setLoading(false)
     }
@@ -113,8 +113,8 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onBattl
             </button>
             <button onClick={onLeaderboard} style={{ ...btnGhost, marginTop: 10 }}>🏆 RANKINGS</button>
             <button onClick={onHistory} style={{ ...btnGhost, marginTop: 10, borderColor: 'rgba(255,107,0,0.3)' }}>
-  📊 MY STATS
-</button>
+              📊 MY STATS
+            </button>
           </>
         )}
 
@@ -198,6 +198,27 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onBattl
                 ⚠️ {error}
               </div>
             )}
+            {/* Chrome recommendation banner */}
+            {!/Chrome/.test(navigator.userAgent) && (
+              <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+                background: 'rgba(255,107,0,0.12)',
+                border: '1px solid rgba(255,107,0,0.3)',
+                borderTop: 'none',
+                padding: '10px 16px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                backdropFilter: 'blur(6px)',
+              }}>
+                <span style={{ fontSize: '0.9rem' }}>🌐</span>
+                <span style={{
+                  fontFamily: 'Share Tech Mono, monospace',
+                  fontSize: '0.65rem', color: '#ff6b00',
+                  letterSpacing: '0.12em',
+                }}>
+                  FOR THE BEST EXPERIENCE, USE CHROME
+                </span>
+              </div>
+            )}
 
             <button onClick={handleEmail} disabled={loading} style={btnMain}>
               {loading ? 'LOADING...' : isNewUser ? 'CREATE ACCOUNT' : 'SIGN IN'}
@@ -215,10 +236,10 @@ export default function Landing({ user, username, onPlay, onLeaderboard, onBattl
 function GoogleIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 48 48">
-      <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.2 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8 20-20 0-1.3-.2-2.7-.4-4z"/>
-      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 19 13 24 13c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.7-3-11.4-7.2l-6.5 5C9.5 39.6 16.3 44 24 44z"/>
-      <path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.6-2.7 4.8-5 6.3l6.2 5.2C40 36.2 44 30.6 44 24c0-1.3-.2-2.7-.4-4z"/>
+      <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.2 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 20-8 20-20 0-1.3-.2-2.7-.4-4z" />
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 19 13 24 13c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.7-3-11.4-7.2l-6.5 5C9.5 39.6 16.3 44 24 44z" />
+      <path fill="#1976D2" d="M43.6 20H24v8h11.3c-.9 2.6-2.7 4.8-5 6.3l6.2 5.2C40 36.2 44 30.6 44 24c0-1.3-.2-2.7-.4-4z" />
     </svg>
   )
 }
