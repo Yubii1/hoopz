@@ -1,3 +1,4 @@
+// src/pages/Leaderboard.jsx
 import { useEffect, useState } from 'react'
 import { fetchLeaderboard } from '../firebase/db'
 
