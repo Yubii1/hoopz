@@ -141,9 +141,6 @@ export default function App() {
           opponentScore={opponentScore}
           onEnd={(result) => {
             setGameResult(result)
-            setTimeout(() => {
-              setScreen(prev => prev === 'game-battle' ? 'battle-results' : prev)
-            }, 5000)
           }}
         />
       )}

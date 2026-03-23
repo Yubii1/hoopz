@@ -1,5 +1,5 @@
 // src/pages/BattleResults.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { generateCode, requestRematch, acceptRematch, listenBattle } from '../firebase/battle'
 
 export default function BattleResults({
@@ -14,36 +14,65 @@ export default function BattleResults({
   const [rematchState, setRematchState] = useState('idle')
   const [newCode, setNewCode] = useState(null)
   const [unsubRef, setUnsubRef] = useState(null)
-
-  // Listen on old battle room for opponent rematch request
-  useEffect(() => {
-    if (!prevBattleCode) return
-    const stop = listenBattle(prevBattleCode, (data) => {
-      if (!data?.rematch) return
-      const { requesterRole, newCode: oppNewCode } = data.rematch
-      // Only react if opponent (not us) requested
-      if (requesterRole !== myRole) {
-        setRematchState('opponent-requested')
-        setNewCode(oppNewCode)
-      }
-    })
-    setUnsubRef(() => stop)
-    return () => stop()
-  }, [prevBattleCode, myRole])
-
-  async function handleRequestRematch() {
-    setRematchState('requesting')
-    const code = generateCode()
-    setNewCode(code)
-    try {
-      await requestRematch(prevBattleCode, code, myRole, myName)
-      setRematchState('waiting')
-    } catch (e) {
-      setRematchState('idle')
+  const [ready, setReady] = useState(false)
+  const rematchTimeoutRef = useRef(null)
+const [rematchError, setRematchError] = useState('')
+const rematchStateRef = useRef('idle')
+// use refs for the timeout and state to ensure the timeout callback always has access to the latest state, avoiding stale closures
+useEffect(() => {
+  if (!prevBattleCode) return
+  const stop = listenBattle(prevBattleCode, (data) => {
+    if (!data?.rematch) return
+    const { requesterRole, newCode: oppNewCode } = data.rematch
+    if (requesterRole === myRole) return
+    if (rematchStateRef.current === 'waiting') {
+      if (myRole === 'host') return
+      clearTimeout(rematchTimeoutRef.current)
+      setNewCode(oppNewCode)
+      setRematchState('opponent-requested')
+      rematchStateRef.current = 'opponent-requested'
+    } else {
+      setRematchState('opponent-requested')
+      rematchStateRef.current = 'opponent-requested'
+      setNewCode(oppNewCode)
     }
+  })
+  setUnsubRef(() => stop)
+  return () => stop()
+}, [prevBattleCode, myRole])  //  no rematchState dependency to avoid stale closure
+
+// Clear timeout on unmount
+useEffect(() => {
+  return () => { if (rematchTimeoutRef.current) clearTimeout(rematchTimeoutRef.current) }
+}, [])
+
+//note: using refs and state together for rematchState to ensure the timeout callback always has access to the latest state, avoiding stale closures
+async function handleRequestRematch() {
+  setRematchError('')
+  setRematchState('requesting')
+  rematchStateRef.current = 'requesting'
+  const code = generateCode()
+  setNewCode(code)
+  try {
+    await requestRematch(prevBattleCode, code, myRole, myName)
+    setRematchState('waiting')
+    rematchStateRef.current = 'waiting'
+    rematchTimeoutRef.current = setTimeout(() => {
+      if (rematchStateRef.current === 'waiting') {
+        setRematchState('idle')
+        rematchStateRef.current = 'idle'
+        setRematchError('OPPONENT LEFT THE MATCH.')
+      }
+    }, 20000)
+  } catch (e) {
+    setRematchState('idle')
+    rematchStateRef.current = 'idle'
   }
+}
 
   async function handleAcceptRematch() {
+    setRematchError('') //  clear previous error
+
     if (!newCode) return
     setRematchState('requesting')
     try {
@@ -74,6 +103,25 @@ export default function BattleResults({
     return () => stop()
   }, [rematchState, newCode])
 
+  useEffect(() => {
+    // Give Firebase a moment to settle both scores
+    const t = setTimeout(() => setReady(true), 800)
+    return () => clearTimeout(t)
+  }, [])
+
+  if (!ready) return (
+    <div style={{
+      position: 'fixed', inset: 0, display: 'flex',
+      alignItems: 'center', justifyContent: 'center', background: '#0a0a0f'
+    }}>
+      <div style={{
+        fontFamily: 'Share Tech Mono, monospace',
+        fontSize: '0.8rem', color: '#ff6b00', letterSpacing: '0.3em'
+      }}>
+        LOADING RESULTS...
+      </div>
+    </div>
+  )
   return (
     <div style={{
       position: 'fixed', inset: 0,
@@ -106,8 +154,8 @@ export default function BattleResults({
           textShadow: isTie
             ? '0 0 30px rgba(255,107,0,0.5)'
             : iWon
-            ? '0 0 30px rgba(0,255,135,0.5)'
-            : '0 0 30px rgba(255,64,64,0.5)',
+              ? '0 0 30px rgba(0,255,135,0.5)'
+              : '0 0 30px rgba(255,64,64,0.5)',
           letterSpacing: '0.04em', marginBottom: 6,
         }}>
           {isTie ? "IT'S A TIE!" : iWon ? 'YOU WIN! 🏆' : 'YOU LOSE 💀'}
@@ -129,7 +177,7 @@ export default function BattleResults({
             fontFamily: 'Bebas Neue, sans-serif',
             fontSize: '1.4rem', color: '#4a3a2a', flexShrink: 0,
           }}>VS</div>
-          <ScoreCard name={opponentName ?? 'OPPONENT'} score={opponentScore} winner={!iWon || isTie} label="THEM" />
+          <ScoreCard name={opponentName ?? 'OPPONENT'} score={opponentScore} winner={!iWon && !isTie} label="THEM" />
         </div>
 
         {/* ── Rematch section ── */}
@@ -188,6 +236,16 @@ export default function BattleResults({
               </div>
             </div>
           )}
+          {rematchError && (
+  <div style={{
+    fontFamily: 'Share Tech Mono, monospace',
+    fontSize: '0.72rem', color: '#ff4040',
+    letterSpacing: '0.12em', textAlign: 'center',
+    marginBottom: 10,
+  }}>
+    ⚠️ {rematchError}
+  </div>
+)}
 
           {/* Idle / requesting state — show rematch button */}
           {(rematchState === 'idle' || rematchState === 'requesting') && (

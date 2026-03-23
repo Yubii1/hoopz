@@ -130,7 +130,7 @@ export default function Game({
   useInterval(() => {
     if (gameOverRef.current) return
     const elapsed = GAME_DURATION - timeLeftRef.current
-    if (elapsed < 2) return
+    if (elapsed < 4) return
     const speed = (elapsed * 0.12) + 1.0
     let pos = hoopLeftRef.current + hoopDirRef.current * speed
     if (pos >= 85) { pos = 85; hoopDirRef.current = -1 }
@@ -150,13 +150,15 @@ export default function Game({
     try {
       if (battleCode && battleRole) {
         await markDone(battleCode, battleRole, scoreRef.current)
+        await new Promise(res => setTimeout(res, 1500))
       } else {
         rank = await saveScore(playerName, scoreRef.current, shotsMadeRef.current, shotsTakenRef.current)
       }
     } catch (e) {
       console.warn('Firebase error:', e)
     }
-
+finally {
+    // ✅ ALWAYS call onEnd, even if Firebase failed
     onEnd({
       score: scoreRef.current,
       rank,
@@ -165,6 +167,7 @@ export default function Game({
       maxCombo: maxComboRef.current,
     })
   }
+}
 
   // Solo exit — just end with current score
   function handleSoloExit() {

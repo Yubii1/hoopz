@@ -93,7 +93,6 @@ async function writeHistoryForBoth({ hostName, guestName, hostScore, guestScore,
 }
 
 // ─── markDone: called when a player finishes normally ────────────────────────
-
 export async function markDone(battleCode, role, score) {
   const battleRef = ref(db, `battles/${battleCode}`)
 
@@ -108,6 +107,10 @@ export async function markDone(battleCode, role, score) {
 
   if (data.hostDone && data.guestDone) {
     const hostWon = (data.hostScore ?? 0) >= (data.guestScore ?? 0)
+
+    // ✅ Set status to finished so the listener in App.jsx fires
+    await update(battleRef, { status: 'finished' })
+
     await writeHistoryForBoth({
       hostName:  data.host.name,
       guestName: data.guest.name,
@@ -117,7 +120,6 @@ export async function markDone(battleCode, role, score) {
     })
   }
 }
-
 // ─── markDisconnected: called when a player drops ────────────────────────────
 
 export async function markDisconnected(code, disconnectedRole) {
